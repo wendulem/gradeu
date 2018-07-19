@@ -98,10 +98,7 @@ public static void operatemain() {
 	
 	if (userRole.equals("admin")) {
 		userFrame.setVisible(false);
-		gradeteacher teacherReference = new gradeteacher();
-		teacherReference.getNames();
-		teacherReference.setDatabase(database);
-		teacherReference.gradeSetupTeacher();
+		gradeteacher teacherReference = new gradeteacher(database, profileCollection);
 		teacherReference.setFrame();
 		System.out.println("ADMIN ACCESS GRANTED");
 	} else if (userRole.equals("student")) {

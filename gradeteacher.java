@@ -21,6 +21,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.client.MongoCursor;
 import static com.mongodb.client.model.Filters.*;
@@ -32,16 +33,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 import com.mongodb.client.MongoCollection;
 import static com.mongodb.client.model.Projections.*;
 
-public class gradeteacher {
+public class gradeteacher  {
+	
 	private JFrame teacherViewFrame;
 	private JPanel viewTeacher;
 	private int arrayValueCap = 4;
-			//(gradeback.spanishScoreType.size() + gradeback.scienceScoreType.size() + gradeback.mathScoreType.size() +
-			//gradeback.englishScoreType.size() + gradeback.historyScoreType.size())/5 + 1;
+	//(gradeback.spanishScoreType.size() + gradeback.scienceScoreType.size() + gradeback.mathScoreType.size() +
+	//gradeback.englishScoreType.size() + gradeback.historyScoreType.size())/5 + 1;
 	private JLabel typeLabels[] = new JLabel[arrayValueCap];
 	private JLabel scoreLabels[] = new JLabel[arrayValueCap];
 	private JLabel percentLabels[] = new JLabel[arrayValueCap];
@@ -76,25 +80,90 @@ public class gradeteacher {
 	private List<Double> spanishScoreOut;
 	private List<String> spanishScoreType;
 	private List<String> spanishScoreName;
+	private MongoCollection <Document> profileCollection;
 	
 	private int dropSelected;
-	private String queryName;
 	private MongoDatabase databaseNew;
 	
-	gradeteacher() {
+	gradeteacher(MongoDatabase database, MongoCollection<Document> profileCollection) {
+	this.profileCollection = profileCollection;
+	databaseNew = database;
 	viewTeacher = new JPanel();	
 	teacherViewFrame = new JFrame("Welcome Administrator");
+	GridBagConstraints gbc = new GridBagConstraints();
+	viewTeacher.setLayout(new GridBagLayout());
 	
-	gradeOut = new JTextField();
-	gradeTotal = new JTextField();
-	gradeName = new JTextField();
+	getNames();
+	gradeSetupTeacher();
+	
+	gbc.gridx = 0;
+	gbc.gridy = 0;
+	gbc.weightx = 0.5;
+	gbc.weighty = 0.5;
+	viewTeacher.add(studentDrop, gbc);
+	
+	gradeOut = new JTextField(10);
+	gbc.gridx = 5;
+	gbc.gridy = 6;
+	gbc.weightx = 1;
+	gbc.weighty = 1;
+	viewTeacher.add(gradeOut, gbc);
+	
+	gradeTotal = new JTextField(10);
+	gbc.gridx = 4;
+	gbc.gridy = 6;
+	gbc.weightx = 1;
+	gbc.weighty = 1;
+	viewTeacher.add(gradeTotal, gbc);
+	
+	gradeName = new JTextField(10);
+	gbc.gridx = 3;
+	gbc.gridy = 6;
+	gbc.weightx = 1;
+	gbc.weighty = 1;
+	viewTeacher.add(gradeName, gbc);
+	
 	submitTeacherInput = new JButton("Add");
+	gbc.gridx = 6;
+	gbc.gridy = 6;
+	gbc.weightx = 0.5;
+	gbc.weighty = 0.5;
+	viewTeacher.add(submitTeacherInput, gbc);
 
 	JButton studentEnglish = new JButton("English");
+	gbc.gridx = 2;
+	gbc.gridy = 1;
+	gbc.weightx = 0.5;
+	gbc.weighty = 0.5;
+	viewTeacher.add(studentEnglish, gbc);
+	
 	JButton studentHistory = new JButton("History");
+	gbc.gridx = 3;
+	gbc.gridy = 1;
+	gbc.weightx = 0.5;
+	gbc.weighty = 0.5;
+	viewTeacher.add(studentHistory, gbc);
+	
 	JButton studentScience = new JButton("Science");
+	gbc.gridx = 4;
+	gbc.gridy = 1;
+	gbc.weightx = 0.5;
+	gbc.weighty = 0.5;
+	viewTeacher.add(studentScience, gbc);
+	
 	JButton studentMath = new JButton("Math");
+	gbc.gridx = 5;
+	gbc.gridy = 1;
+	gbc.weightx = 0.5;
+	gbc.weighty = 0.5;
+	viewTeacher.add(studentMath, gbc);
+	
 	JButton studentSpanish = new JButton("Spanish");
+	gbc.gridx = 6;
+	gbc.gridy = 1;
+	gbc.weightx = 0.5;
+	gbc.weighty = 0.5;
+	viewTeacher.add(studentSpanish, gbc);
 		
 	math2ActionListener mathAction = new math2ActionListener();
 	studentMath.addActionListener(mathAction);
@@ -111,12 +180,6 @@ public class gradeteacher {
 	history2ActionListener historyAction = new history2ActionListener();
 	studentHistory.addActionListener(historyAction);
 	
-	viewTeacher.add(studentDrop);
-	viewTeacher.add(studentEnglish);
-	viewTeacher.add(studentHistory);
-	viewTeacher.add(studentScience);
-	viewTeacher.add(studentMath);
-	viewTeacher.add(studentSpanish);
 	teacherViewFrame.add(viewTeacher);
 	teacherViewFrame.pack();
 	teacherViewFrame.setSize(700,500);
@@ -135,75 +198,9 @@ public class gradeteacher {
 		teacherViewFrame.setVisible(true);
 	}
 
-	void fillGrade(List<Double> gotType, List<Double> outType, List<String> typeType, List<String> nameType) {
-		int check = typeType.size();
-		for (int i=0; i < check; i++) {			
-		typeLabels[i] = new JLabel(nameType.get(i));
-		viewTeacher.add(typeLabels[i]);
-				
-		scoreLabels[i] = new JLabel(gotType.get(i)+ "/" + outType.get(i));
-		viewTeacher.add(scoreLabels[i]);
-				
-		double percentRound = (gotType.get(i)/outType.get(i))*100;
-		String percentString = round(percentRound,1)+"%";
-		percentLabels[i] = new JLabel(percentString);
-				
-		viewTeacher.add(percentLabels[i]);
-			
-	}
-}
-
 double round (double value, int precision) {
     int scale = (int) Math.pow(10, precision);
     return (double) Math.round(value * scale) / scale;
-}
-
-class math2ActionListener implements ActionListener {
-	@Override
-public void actionPerformed(ActionEvent ae) {
-	// TODO Auto-generated method stub
-		currentGrades = "math";
-		fillGrade(mathScoreGot,mathScoreOut,mathScoreType,mathScoreName);
-	}
-}
-
-class english2ActionListener implements ActionListener {
-	@Override
-public void actionPerformed(ActionEvent ae) {
-	// TODO Auto-generated method stub
-		currentGrades = "english";
-		fillGrade(englishScoreGot,englishScoreOut,englishScoreType,englishScoreName);
-	}
-}
-
-
-class science2ActionListener implements ActionListener {
-	@Override
-public void actionPerformed(ActionEvent ae) {
-	// TODO Auto-generated method stub
-		currentGrades = "science";	
-		fillGrade(scienceScoreGot,scienceScoreOut,scienceScoreType,scienceScoreName);
-	}
-}
-
-
-class spanish2ActionListener implements ActionListener {
-	@Override
-public void actionPerformed(ActionEvent ae) {
-	// TODO Auto-generated method stub
-		currentGrades = "spanish";	
-		fillGrade(spanishScoreGot,spanishScoreOut,spanishScoreType,spanishScoreName);
-	}
-}
-
-
-class history2ActionListener implements ActionListener {
-	@Override
-public void actionPerformed(ActionEvent ae) {
-	// TODO Auto-generated method stub
-		currentGrades = "history";
-		fillGrade(historyScoreGot,historyScoreOut,historyScoreType,historyScoreName);
-	}
 }
 
 public void gradeSetupTeacher() {
@@ -217,18 +214,15 @@ public void gradeSetupTeacher() {
 	
 	
 }
-	
-public void setDatabase(MongoDatabase database) {
-	databaseNew = database;
-}
 
-public void gradeCalculatingTeacher() {
-	ArrayList<String> userQuery = new ArrayList<String>();
+public void gradeCalculatingTeacher(String queryName) {
+	BasicDBObject userQuery = new BasicDBObject();
 	
-	userQuery.add(queryName);
+	FindIterable<Document> usernameDocument;
+	userQuery.put("fullname",queryName);
 	Document usernameDoc = new Document();
 	usernameDoc.put(queryName, userQuery);
-	FindIterable<Document> usernameDocument = grademain.profileCollection.find(usernameDoc);
+	usernameDocument = profileCollection.find(eq(userQuery));
 			for (Document additionalUsernames  : usernameDocument) {
 				usernameOfSelected = additionalUsernames.getString("username");
 			}
@@ -499,11 +493,88 @@ public void gradeCalculatingTeacher() {
 				spanishCWGot.add(spanishScoreGot.get(i));
 				spanishCWOut.add(spanishScoreOut.get(i));
 				break;
+		}
+	}
 						
-			}
-		}		
+}		
+		void fillGrade(List<Double> gotType, List<Double> outType, List<String> typeType, List<String> nameType) {
+			GridBagConstraints gbc = new GridBagConstraints();
+			int check = typeType.size();
+			for (int i=0; i < check; i++) {			
+			typeLabels[i] = new JLabel(nameType.get(i));
+			gbc.gridx = 3;
+			gbc.gridy = 2+i;
+			gbc.weightx = 0.5;
+			gbc.weighty = 0.5;
+			viewTeacher.add(typeLabels[i],gbc);
+					
+			scoreLabels[i] = new JLabel(gotType.get(i)+ "/" + outType.get(i));
+			gbc.gridx = 4;
+			gbc.gridy = 2+i;
+			gbc.weightx = 0.5;
+			gbc.weighty = 0.5;
+			viewTeacher.add(scoreLabels[i],gbc);
+					
+			double percentRound = (gotType.get(i)/outType.get(i))*100;
+			String percentString = round(percentRound,1)+"%";
+			
+			percentLabels[i] = new JLabel(percentString);
+			gbc.gridx = 5;
+			gbc.gridy = 2+i;
+			gbc.weightx = 0.5;
+			gbc.weighty = 0.5;	
+			viewTeacher.add(percentLabels[i], gbc);
+			
+		}
 
+}
 		
+class math2ActionListener implements ActionListener {
+	@Override
+public void actionPerformed(ActionEvent ae) {
+	// TODO Auto-generated method stub
+	currentGrades = "math";
+	fillGrade(mathScoreGot,mathScoreOut,mathScoreType,mathScoreName);
+	}
+}
+
+class english2ActionListener implements ActionListener {
+	@Override
+public void actionPerformed(ActionEvent ae) {
+	// TODO Auto-generated method stub
+	currentGrades = "english";
+	fillGrade(englishScoreGot,englishScoreOut,englishScoreType,englishScoreName);
+	}
+}
+
+
+class science2ActionListener implements ActionListener {
+	@Override
+public void actionPerformed(ActionEvent ae) {
+	// TODO Auto-generated method stub
+	currentGrades = "science";	
+	fillGrade(scienceScoreGot,scienceScoreOut,scienceScoreType,scienceScoreName);
+	}
+}
+
+
+class spanish2ActionListener implements ActionListener {
+	@Override
+public void actionPerformed(ActionEvent ae) {
+	// TODO Auto-generated method stub
+	currentGrades = "spanish";	
+	fillGrade(spanishScoreGot,spanishScoreOut,spanishScoreType,spanishScoreName);
+	}
+}
+
+
+class history2ActionListener implements ActionListener {
+	@Override
+public void actionPerformed(ActionEvent ae) {
+	// TODO Auto-generated method stub
+	currentGrades = "history";
+	fillGrade(historyScoreGot,historyScoreOut,historyScoreType,historyScoreName);
+	}
 }
 
 class dropboxActionListener implements ActionListener {
@@ -511,8 +582,8 @@ class dropboxActionListener implements ActionListener {
 public void actionPerformed(ActionEvent ae) {
 	// TODO Auto-generated method stub
 		dropSelected = studentDrop.getSelectedIndex();
-		queryName = fullNamesArray.get(dropSelected);
-		gradeCalculatingTeacher();
+		String queryName = fullNamesArray.get(dropSelected);
+		gradeCalculatingTeacher(queryName);
 		
 	}
 }
